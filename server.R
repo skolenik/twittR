@@ -45,13 +45,16 @@ server <- function(input, output, session) {
   
   observeEvent(input$update, once = T, handlerExpr = {
         #api validation at beginning of session
-        api_key <- "your_api_key"
-        api_secret <- "your_api_secret"
-        access_token <- "your_access_token"
-        access_token_secret <- "your_token_secret"
-        setup_twitter_oauth(api_key,api_secret,access_token,access_token_secret)
+        # api_key <- "your_api_key"
+        # api_secret <- "your_api_secret"
+        # access_token <- "your_access_token"
+        # access_token_secret <- "your_token_secret"
+        # setup_twitter_oauth(api_key,api_secret,access_token,access_token_secret)
+        source('twitter_keys_stas.R')
+    
+        twitteR:::setup_twitter_oauth(consumer_key,consumer_secret,access_token,access_secret)
         
-        twitteR:::setup_twitter_oauth(api_key,api_secret,access_token,access_token_secret)
+
   })
   
   #data gathering and plot generation
@@ -72,7 +75,9 @@ server <- function(input, output, session) {
   
           if(inherits(tweets ,'try-error')){
               return(NULL)
-    }
+          }
+      
+        cat("Retrieved ", length(tweets)," tweeets\n")
       }
       #put tweets and metadata into dataframe
         tweets.df <- try(twListToDF(tweets))
