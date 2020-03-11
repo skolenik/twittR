@@ -97,8 +97,8 @@ server <- function(input, output, session) {
           return(clean_vec)
         } 
         
-        text <- tweets.df$text
-        cleaned_text<-cleanStrVec(text)
+        tweet_text <- tweets.df$text
+        cleaned_text<-cleanStrVec(tweet_text)
         
           #create the Corpus object
           myCorpus <- Corpus(VectorSource(cleaned_text))
@@ -129,11 +129,11 @@ server <- function(input, output, session) {
           
           #complete stems
           stemCompletion2 <- function(x, dictionary) {
-          x <- unlist(strsplit(as.character(x), " "))
-            x <- x[x != ""]
-            x <- stemCompletion(x, dictionary=dictionary)
-            x <- paste(x, sep="", collapse=" ")
-            PlainTextDocument(stripWhitespace(x))
+              x <- unlist(strsplit(as.character(x), " "))
+              x <- x[x != ""]
+              x <- stemCompletion(x, dictionary=dictionary)
+              x <- paste(x, sep="", collapse=" ")
+              PlainTextDocument(stripWhitespace(x))
           }
           myCorpus <- lapply(myCorpus, stemCompletion2, dictionary=myCorpusCopy)
           myCorpus <- Corpus(VectorSource(myCorpus))
@@ -151,9 +151,9 @@ server <- function(input, output, session) {
         
         #single string of all tweets for tweet generation function
         getNGramStr <- function(myCorpus) {
-          str <- sapply(myCorpus, function(x){x$content})
-          str <- concatenate(lapply(str,"[",1))
-          return(str)
+          this_str <- sapply(myCorpus, function(x){x$content})
+          this_str <- concatenate(lapply(this_str,"[",1))
+          return(this_str)
         }
         
         #dataframe of n-grams for table function
@@ -179,7 +179,7 @@ server <- function(input, output, session) {
         }
       
       #word frequency dataframe
-      tweets.df <- getConditionedDataFrame(myCorpus)
+      tweets.df2 <- getConditionedDataFrame(myCorpus)
     
       #TDM/DTM for topic modeling 
       tdm <- TermDocumentMatrix(myCorpus, control = list(wordLengths = c(1, Inf)))
@@ -190,10 +190,10 @@ server <- function(input, output, session) {
       tweets.df.copy <- tweets.df.copy[rowTotals> 0,]
       
       #transpose dataframe for random word gathering
-      tweets.df.t <- tweets.df[,-2]
+      tweets.df.t <- tweets.df2[,-2]
       
       #n-gram string
-      str <- getNGramStr(myCorpus)
+      ngramstr <- getNGramStr(myCorpus)
 
       #n-gram dataframe
       df2 <- getNGramDf2(myCorpus)
@@ -209,7 +209,7 @@ server <- function(input, output, session) {
         
         #word frequency barplot
         output$freqPlot <- renderPlot({
-          ggplot(tweets.df[1:input$numWords,], aes(x=reorder(term, freq), y=freq, fill = as.factor(term))) +
+          ggplot(tweets.df2[1:input$numWords,], aes(x=reorder(term, freq), y=freq, fill = as.factor(term))) +
           geom_bar(stat = "identity", position = "dodge", col= "black") + xlab("Terms") + ylab("Count") +
           coord_flip() + scale_fill_hue(c = sample(hues, 1)) + guides(fill=FALSE)
         })
@@ -217,9 +217,9 @@ server <- function(input, output, session) {
         #wordcloud
         output$wordPlot <- renderWordcloud2({
           validate(
-            need(input$max <= nrow(tweets.df), "Selected size greater than number of elements in data")
+            need(input$max <= nrow(tweets.df2), "Selected size greater than number of elements in data")
           )
-          new_df <- tweets.df[1:input$max,]
+          new_df <- tweets.df2[1:input$max,]
           wordcloud2(new_df, color="random-light", size = .6, shuffle=T, rotateRatio = sample(c(1:100) / 100))
         })
         
@@ -227,9 +227,9 @@ server <- function(input, output, session) {
         observeEvent(input$newCloud, handlerExpr = {
           output$wordPlot <- renderWordcloud2({
             validate(
-              need(input$max <= nrow(tweets.df), "Selected size greater than number of elements in data")
+              need(input$max <= nrow(tweets.df2), "Selected size greater than number of elements in data")
             )
-            new_df <- tweets.df[1:input$max,]
+            new_df <- tweets.df2[1:input$max,]
             wordcloud2(new_df, color = "random-light", shuffle=T, size = .6, rotateRatio = sample(c(1:100) / 100))
           })
         })
@@ -241,7 +241,7 @@ server <- function(input, output, session) {
         #word correlation plot
         output$corrPlot <- renderPlot({
           validate(
-            need(input$lowFreq < tweets.df[1,2], "Selected frequency is greater than highest value in data,
+            need(input$lowFreq < tweets.df2[1,2], "Selected frequency is greater than highest value in data,
                                                   please choose a lower value.")
           )
           plot((tdm),
@@ -357,7 +357,7 @@ server <- function(input, output, session) {
         validate(
           need(try(input$nGram <= input$length), "Selected N-Gram value greater than requested tweet length")
         )
-        ng <-  ngram(str, input$nGram)
+        ng <-  ngram(ngramstr, input$nGram)
         babble(ng, input$length)
       })
   
@@ -367,7 +367,7 @@ server <- function(input, output, session) {
        validate(
          need(try(input$nGram <= input$length), "Selected N-Gram value greater than requested tweet length")
        )
-     ng <-  ngram(str, input$nGram)
+     ng <-  ngram(ngramstr, input$nGram)
      babble(ng, input$length)
    })
    })
