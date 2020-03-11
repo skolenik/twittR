@@ -18,6 +18,7 @@ library(ngram)
 library(RWeka)
 library(Rmpfr)
 library(Rgraphviz)
+library(scales)
 
 ui <- shinyUI(
   pageWithSidebar(
